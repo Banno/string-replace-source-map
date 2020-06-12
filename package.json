@@ -1,0 +1,22 @@
+{
+  "name": "string-replace-source-map",
+  "version": "1.0.0",
+  "description": "Replace strings in a file with a source map and update the mappings at the same time.",
+  "main": "index.js",
+  "repository": "https://github.com/banno/string-replace-source-map",
+  "author": "Chad Killingsworth <ckillingsworth@jackhenry.com>",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "jasmine test/**/*.spec.js"
+  },
+  "files": [
+    "readme.md",
+    "index.js"
+  ],
+  "dependencies": {
+    "source-map": "0.7.x"
+  },
+  "devDependencies": {
+    "jasmine": "^3.5.0"
+  }
+}
