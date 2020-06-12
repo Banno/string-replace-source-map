@@ -101,6 +101,16 @@ class StringReplaceSourceMap {
     this.locationUpdates = [];
   }
 
+  /** @param {string} newString */
+  append(newString) {
+    this.replace(this.string.length, this.string.length, newString);
+  }
+
+  /** @param {string} newString */
+  prepend(newString) {
+    this.replace(0, 0, newString);
+  }
+
   /**
    * @param {number} start 
    * @param {number} end 
@@ -156,12 +166,12 @@ class StringReplaceSourceMap {
 
   /** @return {!string} */
   toString() {
-    this.locationUpdates.slice().sort(compareLocations);
+    const locationUpdates = this.locationUpdates.slice().sort(compareLocations);
     let updatedString = this.string;
-    for (let i = this.locationUpdates.length - 1; i >= 0; i--) {
-      updatedString = updatedString.substr(0, this.locationUpdates[i].start.index) +
-          this.locationUpdates[i].newString + 
-          updatedString.substr(this.locationUpdates[i].end.index);
+    for (let i = locationUpdates.length - 1; i >= 0; i--) {
+      updatedString = updatedString.substr(0, locationUpdates[i].start.index) +
+          locationUpdates[i].newString + 
+          updatedString.substr(locationUpdates[i].end.index);
     }
     return updatedString;
   }
