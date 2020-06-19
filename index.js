@@ -74,7 +74,10 @@ function compareLocations(a, b) {
   if (a.end.line !== b.end.line) {
     return a.end.line - b.end.line;
   }
-  return a.end.column - b.end.column;
+  if (a.end.column !== b.end.column) {
+    return a.end.column - b.end.column;
+  }
+  return a.id - b.id;
 }
 
 class StringReplaceSourceMap {
@@ -99,6 +102,7 @@ class StringReplaceSourceMap {
       this.sourceMap = originalSourceMap;
     }
     this.locationUpdates = [];
+    this.nextId = 0;
   }
 
   /** @param {string} newString */
@@ -114,13 +118,13 @@ class StringReplaceSourceMap {
   /**
    * @param {number} start 
    * @param {number} end 
-   * @param {string} newString 
+   * @param {?string=} newString 
    */
   replace(start, end, newString) {
     const lineIndexesForNewString = getLineIndexes(newString);
 
     const originalStringStartLine = getLineNumForIndex(start, this.lineIndexes);
-    const originalStringEndLine = getLineNumForIndex(end, this.lineIndexes)
+    const originalStringEndLine = getLineNumForIndex(end, this.lineIndexes);
     const locationUpdates = {
       start: {
         index: start,
@@ -133,8 +137,11 @@ class StringReplaceSourceMap {
         column: end - this.lineIndexes[originalStringEndLine - 1]
       },
       newString,
-      newStringNumLines: lineIndexesForNewString.length
+      newStringNumLines: lineIndexesForNewString.length,
+      preserveMapping: !(newString === null || newString === undefined || newString.length === 0),
+      id: this.nextId
     };
+    this.nextId++;
 
     const lineOffset = (lineIndexesForNewString.length - 1) - (originalStringEndLine - originalStringStartLine);
     const originalStringLastLineLength = locationUpdates.end.column -
@@ -170,7 +177,7 @@ class StringReplaceSourceMap {
     let updatedString = this.string;
     for (let i = locationUpdates.length - 1; i >= 0; i--) {
       updatedString = updatedString.substr(0, locationUpdates[i].start.index) +
-          locationUpdates[i].newString + 
+          (locationUpdates[i].newString || '') + 
           updatedString.substr(locationUpdates[i].end.index);
     }
     return updatedString;
@@ -190,13 +197,6 @@ class StringReplaceSourceMap {
       sourceMapOptions.sourceRoot = this.sourceMap.sourceRoot;
     }
     const sourceMapGenerator = new sourceMap.SourceMapGenerator(sourceMapOptions);
-    if (this.sourceMap.sourcesContent) {
-      this.sourceMap.sources.forEach((sourceFile, index) => {
-        if (this.sourceMap.sourcesContent[index]) {
-          sourceMapGenerator.setSourceContent(sourceFile, this.sourceMap.sourcesContent[index]);
-        }
-      });
-    }
     const locationUpdates = this.locationUpdates.slice().sort(compareLocations);
     let locationUpdatesIndex = 0;
     let lineOffset = 0;
@@ -205,7 +205,9 @@ class StringReplaceSourceMap {
       offsets: []
     };
     let currentLocationUpdate = locationUpdates[locationUpdatesIndex];
+    let sourcesReferenced = new Set();
     await sourceMap.SourceMapConsumer.with(this.sourceMap, null, async (sourceMapConsumer) => {
+      let currentLine = 0;
       sourceMapConsumer.eachMapping((mapping) => {
         let mappingRecord = {
           source: mapping.source,
@@ -214,6 +216,7 @@ class StringReplaceSourceMap {
             column: mapping.generatedColumn
           }
         };
+        sourcesReferenced.add(mapping.source);
         if (mapping.originalLine !== null && mapping.originalLine !== undefined) {
           mappingRecord.original = {
             line: mapping.originalLine,
@@ -228,16 +231,27 @@ class StringReplaceSourceMap {
 
         // Advance the locationUpdate if necessary
         if (currentLocationUpdate) {
-          if (currentLocationUpdate.start.line > mappingRecord.generated.line ||
-              (currentLocationUpdate.start.line == mappingRecord.generated.line &&
+          // Find an exact match - may need to remove the mapping if the replacement string is empty
+          if (currentLocationUpdate.start.line === mappingRecord.generated.line &&
+                currentLocationUpdate.start.column === mappingRecord.generated.column &&
+                !currentLocationUpdate.preserveMapping) {
+            mappingRecord = null;
+          // Check if the next location is still ahead of the current mapping record.
+          } else if (currentLocationUpdate.start.line > mappingRecord.generated.line ||
+              (currentLocationUpdate.start.line === mappingRecord.generated.line &&
                  currentLocationUpdate.start.column >= mappingRecord.generated.column)) {
             // do nothing
-          } else if (currentLocationUpdate.end.line > mappingRecord.generated.line ||
-              (currentLocationUpdate.end.line == mappingRecord.generated.line &&
-                 currentLocationUpdate.end.column > mappingRecord.generated.column &&
-                 currentLocationUpdate.start.column > mappingRecord.generated.column)) {
+          // Check if the current mapping record is inside the the next replacement. If so, remove the mapping
+          } else if (
+              (currentLocationUpdate.end.line > mappingRecord.generated.line ||
+                (currentLocationUpdate.end.line == mappingRecord.generated.line &&
+                  currentLocationUpdate.end.column > mappingRecord.generated.column)) &&
+              (currentLocationUpdate.start.line < mappingRecord.generated.line ||
+                (currentLocationUpdate.start.line === mappingRecord.generated.line &&
+                  currentLocationUpdate.start.column < mappingRecord.generated.column))) {
             mappingRecord = null;
-          } else if (currentLocationUpdate.end.line > mappingRecord.generated.line ||
+          // Check if the current mapping record is past the replacement. If so, move to the next replacement update.
+          } else if (mappingRecord.generated.line > currentLocationUpdate.end.line ||
               (currentLocationUpdate.end.line === mappingRecord.generated.line &&
                   currentLocationUpdate.end.column <= mappingRecord.generated.column)) {
             lineOffset += currentLocationUpdate.offsetInfo.line;
@@ -265,12 +279,22 @@ class StringReplaceSourceMap {
               return calculatedOffset;
             }, 0);
           }
+          if (mappingRecord.generated.line !== currentLine) {
+            currentLine = mappingRecord.generated.line;
+          }
           mappingRecord.generated.line += lineOffset;
           mappingRecord.generated.column += columnOffset;
           sourceMapGenerator.addMapping(mappingRecord);
         }
       });
     });
+    if (this.sourceMap.sourcesContent) {
+      this.sourceMap.sources.forEach((sourceFile, index) => {
+        if (sourcesReferenced.has(sourceFile) && this.sourceMap.sourcesContent[index]) {
+          sourceMapGenerator.setSourceContent(sourceFile, this.sourceMap.sourcesContent[index]);
+        }
+      });
+    }
     return sourceMapGenerator.toJSON();
   }
 }
