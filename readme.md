@@ -96,5 +96,5 @@ stringReplaceSourceMap.replace(beginIndex, endIndex, newSubString);
 
 console.log('New string', stringReplaceSourceMap.toString());
 stringReplaceSourceMap.generateMap()
-  .then((updatedSourceMap) => console.log('Updated source map', stringReplaceSourceMap.generateMap()));
+  .then((updatedSourceMap) => console.log('Updated source map', updatedSourceMap));
 ```
