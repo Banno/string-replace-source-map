@@ -14,6 +14,7 @@
     "index.js"
   ],
   "dependencies": {
+    "acorn": "7.x",
     "source-map": "0.7.x"
   },
   "devDependencies": {

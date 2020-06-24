@@ -87,6 +87,14 @@ Returns a promise which resolves to a source map (in JSON format) with all the m
 const sourceMap = await stringReplaceSourceMap.generateMap();
 ```
 
+**StringReplaceSourceMap.generateJsIdentityMap**
+Helper method to create an identity source map so that replacments properly map back to the original position.
+Parameters include the path to the file as well as the contents which will be parsed as JavaScript.
+Returns a source map as a JSON object.
+```js
+const sourceMap = StringReplaceSourceMap.generateJsIdentityMap(filepath, jsContents);
+```
+
 ## Example usage
 
 ```js

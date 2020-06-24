@@ -1,4 +1,5 @@
 const sourceMap = require('source-map');
+const acorn = require('acorn');
 
 /**
  * @type {{
@@ -296,6 +297,35 @@ class StringReplaceSourceMap {
       });
     }
     return sourceMapGenerator.toJSON();
+  }
+
+  /**
+   * Helper method to generate an identity source map for a JS file
+   * 
+   * @param {string} sourcePath of the file
+   * @param {string} jsSource
+   * @return {!Object}
+   */
+  static generateJsIdentityMap(sourcePath, jsSource) {
+    const generator = new sourceMap.SourceMapGenerator({ file: sourcePath });
+    const tokenizer = acorn.tokenizer(jsSource, {
+      allowHashBang: true,
+      locations: true,
+    });
+  
+    for (let token = tokenizer.getToken(); token.type.label !== 'eof'; token = tokenizer.getToken()) {
+      const mapping = {
+        original: token.loc.start,
+        generated: token.loc.start,
+        source: sourcePath,
+      };
+      if (token.type.label === 'name') {
+        mapping.name = token.value;
+      }
+      generator.addMapping(mapping);
+    }
+    generator.setSourceContent(sourcePath, jsSource);
+    return generator.toJSON();
   }
 }
 
