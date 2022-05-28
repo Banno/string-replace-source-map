@@ -14,8 +14,8 @@
     "index.js"
   ],
   "dependencies": {
-    "acorn": "7.x",
-    "source-map": "0.7.x"
+    "acorn": "8.x",
+    "source-map": "0.8.0-beta.0 || 0.8.x"
   },
   "devDependencies": {
     "jasmine": "^3.5.0"
