@@ -211,7 +211,7 @@ class StringReplaceSourceMap {
       let currentLine = 0;
       sourceMapConsumer.eachMapping((mapping) => {
         let mappingRecord = {
-          source: mapping.source,
+          source: mapping.source === '' ? ' ' : mapping.source, // empty source names throw errors
           generated: {
             line: mapping.generatedLine,
             column: mapping.generatedColumn
@@ -291,6 +291,10 @@ class StringReplaceSourceMap {
     });
     if (this.sourceMap.sourcesContent) {
       this.sourceMap.sources.forEach((sourceFile, index) => {
+        if (sourceFile === ' ') {
+          sourceFile = '';
+          this.sourceMap.sources[index] = sourceFile;
+        }
         if (sourcesReferenced.has(sourceFile) && this.sourceMap.sourcesContent[index]) {
           sourceMapGenerator.setSourceContent(sourceFile, this.sourceMap.sourcesContent[index]);
         }
