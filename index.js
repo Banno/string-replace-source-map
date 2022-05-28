@@ -311,6 +311,7 @@ class StringReplaceSourceMap {
     const tokenizer = acorn.tokenizer(jsSource, {
       allowHashBang: true,
       locations: true,
+      ecmaVersion: 'latest'
     });
   
     for (let token = tokenizer.getToken(); token.type.label !== 'eof'; token = tokenizer.getToken()) {
