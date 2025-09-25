@@ -1,6 +1,6 @@
 {
   "name": "string-replace-source-map",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Replace strings in a file with a source map and update the mappings at the same time.",
   "main": "index.js",
   "repository": "https://github.com/banno/string-replace-source-map",
