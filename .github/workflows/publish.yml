@@ -27,5 +27,5 @@ jobs:
         run: YARN_ENABLE_COLORS=true yarn install
       - name: Publish packages to npm
         run: |
-          yarn --version
-          yarn npm publish
+          npm --version
+          npm publish
