@@ -15,9 +15,10 @@
   ],
   "dependencies": {
     "acorn": "8.x",
-    "source-map": "0.8.0-beta.0 || 0.8.x"
+    "source-map": "^0.7.6"
   },
   "devDependencies": {
     "jasmine": "^3.5.0"
-  }
+  },
+  "packageManager": "yarn@4.16.0"
 }
