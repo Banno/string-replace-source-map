@@ -1,6 +1,11 @@
-const fs = require('fs');
-const path = require('path');
-const sourceMap = require('source-map');
+import * as fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath, URL} from 'node:url';
+import sourceMap from 'source-map';
+import StringReplaceSourceMap from '../index.js';
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
+
 
 function verifySourceMap(originalContents, newContents, generatedSourceMap, replacementIndex) {
   const originalLines = originalContents.split('\n');
@@ -30,7 +35,6 @@ function verifySourceMap(originalContents, newContents, generatedSourceMap, repl
 }
 
 describe('string-replace-source-map', () => {
-  const StringReplaceSourceMap = require('../');
   const originalFile = fs.readFileSync(path.resolve(__dirname, 'fixtures/original-file.js'), 'utf8');
   const originalSourceMap = fs.readFileSync(path.resolve(__dirname, 'fixtures/original-file.js.map'), 'utf8');
   /** @type {!StringReplaceSourceMap} */

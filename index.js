@@ -1,5 +1,5 @@
-const sourceMap = require('source-map');
-const acorn = require('acorn');
+import sourceMap from 'source-map';
+import * as acorn from 'acorn';
 
 /**
  * @type {{
@@ -26,12 +26,12 @@ let LocationSpan;
  *   sourcesContent: (!Array<string>|undefined),
  *   names: !Array<string>,
  *   mappings: string
- * }} 
+ * }}
  */
 let SourceMap;
 
 /**
- * @param {!string} input 
+ * @param {!string} input
  * @return {!Array<number>} Array of indexes indicating the index in the original string of start each new line
  */
 function getLineIndexes(input) {
@@ -45,7 +45,7 @@ function getLineIndexes(input) {
 }
 
 /**
- * @param {number} index 
+ * @param {number} index
  * @param {!Array<number>} lineIndexes
  * @return {number}
  */
@@ -61,8 +61,8 @@ function getLineNumForIndex(index, lineIndexes) {
 }
 
 /**
- * @param {!LocationSpan} a 
- * @param {!LocationSpan} b 
+ * @param {!LocationSpan} a
+ * @param {!LocationSpan} b
  * @return {number}
  */
 function compareLocations(a, b) {
@@ -81,7 +81,7 @@ function compareLocations(a, b) {
   return a.id - b.id;
 }
 
-class StringReplaceSourceMap {
+export default class StringReplaceSourceMap {
   /**
    * @param {!string} originalString
    * @param {string|SourceMap|null} originalSourceMap
@@ -117,9 +117,9 @@ class StringReplaceSourceMap {
   }
 
   /**
-   * @param {number} start 
-   * @param {number} end 
-   * @param {?string=} newString 
+   * @param {number} start
+   * @param {number} end
+   * @param {?string=} newString
    */
   replace(start, end, newString) {
     const lineIndexesForNewString = getLineIndexes(newString);
@@ -178,7 +178,7 @@ class StringReplaceSourceMap {
     let updatedString = this.string;
     for (let i = locationUpdates.length - 1; i >= 0; i--) {
       updatedString = updatedString.substr(0, locationUpdates[i].start.index) +
-          (locationUpdates[i].newString || '') + 
+          (locationUpdates[i].newString || '') +
           updatedString.substr(locationUpdates[i].end.index);
     }
     return updatedString;
@@ -269,7 +269,7 @@ class StringReplaceSourceMap {
 
         if (mappingRecord) {
           let columnOffset = 0;
-          if (mappingRecord.generated.line === columnOffsets.line) { 
+          if (mappingRecord.generated.line === columnOffsets.line) {
             columnOffset = columnOffsets.offsets.reduce((calculatedOffset, offsetInfo) => {
               if (offsetInfo.resetColumn) {
                 return offsetInfo.offset;
@@ -305,7 +305,7 @@ class StringReplaceSourceMap {
 
   /**
    * Helper method to generate an identity source map for a JS file
-   * 
+   *
    * @param {string} sourcePath of the file
    * @param {string} jsSource
    * @return {!Object}
@@ -317,7 +317,7 @@ class StringReplaceSourceMap {
       locations: true,
       ecmaVersion: 'latest'
     });
-  
+
     for (let token = tokenizer.getToken(); token.type.label !== 'eof'; token = tokenizer.getToken()) {
       const mapping = {
         original: token.loc.start,
@@ -333,5 +333,3 @@ class StringReplaceSourceMap {
     return generator.toJSON();
   }
 }
-
-module.exports = StringReplaceSourceMap;
