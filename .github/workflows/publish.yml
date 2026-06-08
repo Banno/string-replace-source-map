@@ -28,4 +28,4 @@ jobs:
       - name: Publish packages to npm
         run: |
           npm --version
-          npm publish
+          npm publish --provenance
